@@ -25,8 +25,8 @@ export default function About() {
             viewport={{ once: true }}
             className="absolute -bottom-10 -right-10 glass-card p-8 rounded-2xl shadow-xl border border-white/40 max-w-xs"
           >
-            <p className="text-primary font-bold text-4xl mb-1">1.5+</p>
-            <p className="text-sm font-semibold uppercase tracking-wider text-on-surface-variant">Years of Real-World Engineering</p>
+            <p className="text-primary font-bold text-4xl mb-1">2 Years</p>
+            <p className="text-sm font-semibold uppercase tracking-wider text-on-surface-variant">of Experience</p>
           </motion.div>
         </motion.div>
 

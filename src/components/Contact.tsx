@@ -50,8 +50,8 @@ export default function Contact() {
 
         <div className="flex justify-center gap-6">
           {[
-            { icon: Github, href: '#', color: 'bg-on-background' },
-            { icon: Linkedin, href: '#', color: 'bg-[#0077b5]' }
+            { icon: Github, href: 'https://github.com/Gandharvkalia1', color: 'bg-on-background' },
+            { icon: Linkedin, href: 'https://www.linkedin.com/in/gandharvkalia/', color: 'bg-[#0077b5]' }
           ].map((social, i) => (
             <motion.a 
               key={i}
