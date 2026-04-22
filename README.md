@@ -1,20 +1,56 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Portfolio Website
 
-# Run and deploy your AI Studio app
+Personal portfolio built with Next.js, React, Tailwind CSS, and Motion.
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/046408c7-6ffa-4b2a-b62b-2730c7170fc2
+Prerequisite: Node.js 18+.
 
-## Run Locally
+1. Install dependencies with `npm install`
+2. Start the development server with `npm run dev`
+3. Open [http://localhost:3000](http://localhost:3000)
 
-**Prerequisites:**  Node.js
+## Project structure
 
+- `pages/index.tsx` assembles the homepage sections
+- `src/components` contains the UI sections
+- `src/data/blogPosts.ts` stores the blog card content
+- `public/assets/images` contains local images
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## How to update the blog section
+
+The homepage blog cards are powered by `src/data/blogPosts.ts`.
+
+Each post looks like this:
+
+```ts
+{
+  slug: 'your-post-slug',
+  date: 'Apr 23, 2026',
+  title: 'Your blog title',
+  excerpt: 'A short 1-2 sentence summary for the card.',
+  category: 'Frontend',
+  image: 'https://your-image-url.com/image.jpg',
+  href: '/blog/your-post-slug'
+}
+```
+
+## How to add a new blog post
+
+1. Open [src/data/blogPosts.ts](D:/portfolio/src/data/blogPosts.ts)
+2. Add a new object inside the `blogPosts` array
+3. Update these fields:
+   - `slug`: unique id for the post
+   - `date`: display date shown on the card
+   - `title`: blog post title
+   - `excerpt`: short preview text
+   - `category`: small label on the card
+   - `image`: cover image URL
+   - `href`: optional link to the full article
+
+If you do not add `href`, the card still appears on the portfolio as a preview card.
+
+## Notes
+
+- Right now the site shows blog cards on the homepage only.
+- If you want, the next step can be creating actual `/blog/[slug]` pages so each card opens a full blog article.

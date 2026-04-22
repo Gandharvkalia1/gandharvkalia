@@ -8,7 +8,7 @@ export default function Navbar() {
           Gandharv Kalia
         </div>
         <div className="hidden md:flex items-center gap-8 font-headline font-semibold tracking-tight">
-          {['Work', 'Skills', 'Experience', 'About'].map((item) => (
+          {['Work', 'Skills', 'Blog', 'Experience', 'About'].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase()}`}
