@@ -5,19 +5,25 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "studio": "sanity dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
+    "@portabletext/react": "^6.0.3",
+    "@sanity/image-url": "^2.1.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "next": "^15.5.15",
+    "next-sanity": "^11.6.13",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "sanity": "^4.22.0",
+    "styled-components": "^6.4.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

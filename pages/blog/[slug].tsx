@@ -2,24 +2,69 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
 import { ArrowLeft, ArrowRight, Github } from 'lucide-react';
+import { PortableText } from '@portabletext/react';
 import Navbar from '../../src/components/Navbar';
 import Contact from '../../src/components/Contact';
 import Footer from '../../src/components/Footer';
 import { blogPosts, getBlogPostBySlug } from '../../src/data/blogPosts';
+import { client } from '../../src/sanity/client';
+import { urlFor } from '../../src/sanity/image';
+import { POST_QUERY, POSTS_QUERY } from '../../src/sanity/queries';
+import type { SanityPost, SanityPostSummary } from '../../src/sanity/types';
+
+function formatDate(date?: string) {
+  if (!date) return '';
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+function uniqueSlugs(posts: { slug: string }[]) {
+  return Array.from(new Set(posts.map((post) => post.slug)));
+}
 
 export const getStaticPaths: GetStaticPaths = async () => {
+  let sanityPosts: SanityPostSummary[] = [];
+
+  try {
+    sanityPosts = await client.fetch<SanityPostSummary[]>(POSTS_QUERY);
+  } catch {
+    sanityPosts = [];
+  }
+
   return {
-    paths: blogPosts.map((post) => ({
-      params: { slug: post.slug },
+    paths: uniqueSlugs([...sanityPosts, ...blogPosts]).map((slug) => ({
+      params: { slug },
     })),
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps<{
-  post: (typeof blogPosts)[number];
+  post: SanityPost | (typeof blogPosts)[number];
+  source: 'sanity' | 'static';
 }> = async ({ params }) => {
   const slug = typeof params?.slug === 'string' ? params.slug : '';
+
+  try {
+    const sanityPost = await client.fetch<SanityPost>(POST_QUERY, { slug });
+
+    if (sanityPost) {
+      return {
+        props: {
+          post: sanityPost,
+          source: 'sanity',
+        },
+        revalidate: 60,
+      };
+    }
+  } catch {
+    // Fall through to the local post so the page still works during setup.
+  }
+
   const post = getBlogPostBySlug(slug);
 
   if (!post) {
@@ -31,13 +76,28 @@ export const getStaticProps: GetStaticProps<{
   return {
     props: {
       post,
+      source: 'static',
     },
   };
 };
 
 export default function BlogPostPage({
   post,
+  source,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
+  const isSanityPost = source === 'sanity';
+  const image = isSanityPost && 'mainImage' in post && post.mainImage
+    ? urlFor(post.mainImage).width(1200).height(600).url()
+    : 'image' in post
+      ? post.image
+      : '/assets/images/table.webp';
+  const date =
+    isSanityPost && 'publishedAt' in post ? formatDate(post.publishedAt) : 'date' in post ? post.date : '';
+  const category = post.category || 'Blog';
+  const readingTime = post.readingTime || '5 min read';
+  const intro = post.excerpt || ('intro' in post ? post.intro : '');
+  const takeaway = 'takeaway' in post ? post.takeaway : '';
+
   return (
     <>
       <Head>
@@ -63,7 +123,7 @@ export default function BlogPostPage({
               <div className="overflow-hidden rounded-[2rem] border border-outline-variant/20 bg-white shadow-[0px_20px_50px_rgba(19,27,46,0.08)]">
                 <div className="aspect-[16/8] overflow-hidden bg-surface-container">
                   <img
-                    src={post.image}
+                    src={image}
                     alt={post.title}
                     className="h-full w-full object-cover"
                     referrerPolicy="no-referrer"
@@ -73,10 +133,10 @@ export default function BlogPostPage({
                 <div className="px-6 py-8 md:px-10 md:py-10">
                   <div className="mb-6 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.18em]">
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">
-                      {post.category}
+                      {category}
                     </span>
-                    <span className="text-outline">{post.date}</span>
-                    <span className="text-outline">{post.readingTime}</span>
+                    <span className="text-outline">{date}</span>
+                    <span className="text-outline">{readingTime}</span>
                   </div>
 
                   <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
@@ -84,10 +144,10 @@ export default function BlogPostPage({
                   </h1>
 
                   <p className="max-w-3xl text-lg leading-8 text-on-surface-variant md:text-xl">
-                    {post.intro}
+                    {intro}
                   </p>
 
-                  {post.repoUrl ? (
+                  {'repoUrl' in post && post.repoUrl ? (
                     <div className="mt-8">
                       <a
                         href={post.repoUrl}
@@ -108,19 +168,27 @@ export default function BlogPostPage({
           <section className="px-8 py-8">
             <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
               <article className="space-y-10">
-                {post.sections.map((section) => (
-                  <section
-                    key={section.heading}
-                    className="rounded-[2rem] bg-surface-container-low px-6 py-8 md:px-8"
-                  >
-                    <h2 className="mb-5 text-3xl font-bold">{section.heading}</h2>
+                {isSanityPost ? (
+                  <section className="rounded-[2rem] bg-surface-container-low px-6 py-8 md:px-8">
                     <div className="space-y-5 text-lg leading-8 text-on-surface-variant">
-                      {section.body.map((paragraph) => (
-                        <p key={paragraph}>{paragraph}</p>
-                      ))}
+                      {'body' in post && post.body ? <PortableText value={post.body as any} /> : null}
                     </div>
                   </section>
-                ))}
+                ) : 'sections' in post ? (
+                  post.sections.map((section) => (
+                    <section
+                      key={section.heading}
+                      className="rounded-[2rem] bg-surface-container-low px-6 py-8 md:px-8"
+                    >
+                      <h2 className="mb-5 text-3xl font-bold">{section.heading}</h2>
+                      <div className="space-y-5 text-lg leading-8 text-on-surface-variant">
+                        {section.body.map((paragraph) => (
+                          <p key={paragraph}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </section>
+                  ))
+                ) : null}
               </article>
 
               <aside className="h-fit rounded-[2rem] bg-inverse-surface px-6 py-8 text-white lg:sticky lg:top-28">
@@ -128,7 +196,7 @@ export default function BlogPostPage({
                   Article Snapshot
                 </p>
                 <h2 className="mb-4 text-2xl font-bold">Key takeaway</h2>
-                <p className="mb-8 text-base leading-7 text-white/75">{post.takeaway}</p>
+                <p className="mb-8 text-base leading-7 text-white/75">{takeaway}</p>
 
                 <Link
                   href="/#contact"

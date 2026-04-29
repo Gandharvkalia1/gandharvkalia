@@ -5,7 +5,6 @@ export default function Document() {
     <Html lang="en">
       <Head>
         <meta charSet="UTF-8" />
-        <title>My Google AI Studio App</title>
       </Head>
       <body>
         <Main />

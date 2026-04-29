@@ -9,8 +9,35 @@ import Experience from '../src/components/Experience';
 import Philosophy from '../src/components/Philosophy';
 import Contact from '../src/components/Contact';
 import Footer from '../src/components/Footer';
+import { client } from '../src/sanity/client';
+import { POSTS_QUERY } from '../src/sanity/queries';
+import type { SanityPostSummary } from '../src/sanity/types';
 
-export default function Home() {
+type HomeProps = {
+  posts: SanityPostSummary[];
+};
+
+export async function getStaticProps() {
+  try {
+    const posts = await client.fetch<SanityPostSummary[]>(POSTS_QUERY);
+
+    return {
+      props: {
+        posts,
+      },
+      revalidate: 60,
+    };
+  } catch {
+    return {
+      props: {
+        posts: [],
+      },
+      revalidate: 60,
+    };
+  }
+}
+
+export default function Home({ posts }: HomeProps) {
   return (
     <>
       <Head>
@@ -24,7 +51,7 @@ export default function Home() {
           <About />
           <Skills />
           <Projects />
-          <Blog />
+          <Blog posts={posts} />
           <Experience />
           <Philosophy />
           <Contact />

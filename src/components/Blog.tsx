@@ -2,8 +2,63 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { blogPosts } from '../data/blogPosts';
+import { urlFor } from '../sanity/image';
+import type { SanityPostSummary } from '../sanity/types';
 
-export default function Blog() {
+type BlogProps = {
+  posts?: SanityPostSummary[];
+};
+
+type VisiblePost = {
+  slug: string;
+  href?: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  image: string;
+};
+
+function formatDate(date?: string) {
+  if (!date) return '';
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+function dedupePosts(posts: VisiblePost[]) {
+  const seen = new Set<string>();
+
+  return posts.filter((post) => {
+    if (seen.has(post.slug)) return false;
+
+    seen.add(post.slug);
+    return true;
+  });
+}
+
+export default function Blog({ posts = [] }: BlogProps) {
+  const localPosts = dedupePosts(blogPosts);
+  const sanityPosts = posts.map((post) => ({
+    slug: post.slug,
+    href: `/blog/${post.slug}`,
+    title: post.title,
+    excerpt: post.excerpt || '',
+    category: post.category || 'Blog',
+    date: formatDate(post.publishedAt),
+    image: post.mainImage
+      ? urlFor(post.mainImage).width(900).height(560).url()
+      : '/assets/images/table.webp',
+  }));
+  const sanityAndFirstLocalPost = localPosts[0] ? [localPosts[0], ...sanityPosts] : sanityPosts;
+  const visiblePosts =
+    sanityPosts.length > 0
+      ? dedupePosts(sanityAndFirstLocalPost)
+      : localPosts;
+
   return (
     <section className="py-32 bg-surface" id="blog">
       <div className="max-w-7xl mx-auto px-8">
@@ -18,7 +73,7 @@ export default function Blog() {
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {blogPosts.map((post, index) => (
+          {visiblePosts.map((post, index) => (
             <motion.article
               key={post.slug}
               initial={{ opacity: 0, y: 30 }}
