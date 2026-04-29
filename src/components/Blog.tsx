@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { blogPosts } from '../data/blogPosts';
+import { client } from '../sanity/client';
 import { urlFor } from '../sanity/image';
+import { POSTS_QUERY } from '../sanity/queries';
 import type { SanityPostSummary } from '../sanity/types';
 
 type BlogProps = {
@@ -41,8 +44,10 @@ function dedupePosts(posts: VisiblePost[]) {
 }
 
 export default function Blog({ posts = [] }: BlogProps) {
+  const [livePosts, setLivePosts] = useState(posts);
+  const sourcePosts = livePosts.length > 0 ? livePosts : posts;
   const localPosts = dedupePosts(blogPosts);
-  const sanityPosts = posts.map((post) => ({
+  const sanityPosts = sourcePosts.map((post) => ({
     slug: post.slug,
     href: `/blog/${post.slug}`,
     title: post.title,
@@ -58,6 +63,25 @@ export default function Blog({ posts = [] }: BlogProps) {
     sanityPosts.length > 0
       ? dedupePosts(sanityAndFirstLocalPost)
       : localPosts;
+
+  useEffect(() => {
+    let ignore = false;
+
+    client
+      .fetch<SanityPostSummary[]>(POSTS_QUERY)
+      .then((freshPosts) => {
+        if (!ignore) {
+          setLivePosts(freshPosts);
+        }
+      })
+      .catch(() => {
+        // Keep the statically rendered/local posts if Sanity is unavailable.
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <section className="py-32 bg-surface" id="blog">
